@@ -467,6 +467,15 @@ void Unit::Update(uint32 p_time)
     UpdateSplineMovement(p_time);
     i_motionMaster->Update(p_time);
 
+    // Wait with the aura interrupts until we have updated our movement generators and position
+    if (GetTypeId() == TYPEID_PLAYER)
+        InterruptMovementBasedAuras();
+    else if (!movespline->Finalized())
+        InterruptMovementBasedAuras();
+
+    // All position info based actions have been executed, reset info
+    _positionUpdateInfo.Reset();
+
     if (!GetAI() && (GetTypeId() != TYPEID_PLAYER || (IsCharmed() && GetCharmerGUID().IsCreature())))
         UpdateCharmAI();
     RefreshAI();
@@ -529,6 +538,16 @@ void Unit::UpdateSplinePosition()
         loc.orientation = GetOrientation();
 
     UpdatePosition(loc.x, loc.y, loc.z, loc.orientation);
+}
+
+void Unit::InterruptMovementBasedAuras()
+{
+    // TODO: Check if orientation transport offset changed instead of only global orientation
+    if (_positionUpdateInfo.Turned)
+        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_TURNING);
+
+    if (_positionUpdateInfo.Relocated && !GetVehicle())
+        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_MOVE);
 }
 
 void Unit::DisableSpline()
@@ -13063,6 +13082,7 @@ void Unit::_ExitVehicle(Position const* exitPosition)
         return;
 
     // This should be done before dismiss, because there may be some aura removal
+    VehicleSeatAddon const* seatAddon = m_vehicle->GetSeatAddonForSeatOfPassenger(this);
     Vehicle* vehicle = m_vehicle->RemovePassenger(this);
 
     Player* player = ToPlayer();
@@ -13093,7 +13113,18 @@ void Unit::_ExitVehicle(Position const* exitPosition)
         // Set exit position to vehicle position and use the current orientation
         pos = vehicle->GetBase()->GetPosition();
         pos.SetOrientation(GetOrientation());
+
+        // To-do: snap this hook out of existance
         sScriptMgr->ModifyVehiclePassengerExitPos(this, vehicle, pos);
+
+        // Change exit position based on seat entry addon data
+        if (seatAddon)
+        {
+            if (seatAddon->ExitParameter == VehicleExitParameters::VehicleExitParamOffset)
+                pos.RelocateOffset({ seatAddon->ExitParameterX, seatAddon->ExitParameterY, seatAddon->ExitParameterZ, seatAddon->ExitParameterO });
+            else if (seatAddon->ExitParameter == VehicleExitParameters::VehicleExitParamDest)
+                pos.Relocate({ seatAddon->ExitParameterX, seatAddon->ExitParameterY, seatAddon->ExitParameterZ, seatAddon->ExitParameterO });
+        }
     }
 
     float height = pos.GetPositionZ() + vehicle->GetBase()->GetCollisionHeight();
@@ -13267,15 +13298,8 @@ bool Unit::UpdatePosition(float x, float y, float z, float orientation, bool tel
         std::fabs(GetPositionY() - y) > 0.001f ||
         std::fabs(GetPositionZ() - z) > 0.001f);
 
-    // TODO: Check if orientation transport offset changed instead of only global orientation
-    if (turn)
-        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_TURNING);
-
     if (relocated)
     {
-        if (!GetVehicle())
-            RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_MOVE);
-
         // move and update visible state if need
         if (GetTypeId() == TYPEID_PLAYER)
             GetMap()->PlayerRelocation(ToPlayer(), x, y, z, orientation);
@@ -13286,6 +13310,9 @@ bool Unit::UpdatePosition(float x, float y, float z, float orientation, bool tel
         UpdateOrientation(orientation);
 
     UpdatePositionData();
+
+    _positionUpdateInfo.Relocated = relocated;
+    _positionUpdateInfo.Turned = turn;
 
     return (relocated || turn);
 }
