@@ -101,14 +101,9 @@ class TC_GAME_API MapManager
             return IsValidMAP(mapid, false) && Trinity::IsValidMapCoord(x, y, z, o);
         }
 
-        static bool IsValidMapCoord(uint32 mapid, Position const& pos)
-        {
-            return IsValidMapCoord(mapid, pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation());
-        }
-
         static bool IsValidMapCoord(WorldLocation const& loc)
         {
-            return IsValidMapCoord(loc.GetMapId(), loc);
+            return IsValidMapCoord(loc.GetMapId(), loc.GetPositionX(), loc.GetPositionY(), loc.GetPositionZ(), loc.GetOrientation());
         }
 
         void DoDelayedMovesAndRemoves();

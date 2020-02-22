@@ -364,7 +364,7 @@ void Item::SaveToDB(SQLTransaction& trans)
 
             trans->Append(stmt);
 
-            if ((uState == ITEM_CHANGED) && IsWrapped())
+            if ((uState == ITEM_CHANGED) && HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_WRAPPED))
             {
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_GIFT_OWNER);
                 stmt->setUInt32(0, GetOwnerGUID().GetCounter());
@@ -379,7 +379,7 @@ void Item::SaveToDB(SQLTransaction& trans)
             stmt->setUInt32(0, guid);
             trans->Append(stmt);
 
-            if (IsWrapped())
+            if (HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_WRAPPED))
             {
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GIFT);
                 stmt->setUInt32(0, guid);
@@ -466,7 +466,7 @@ bool Item::LoadFromDB(ObjectGuid::LowType guid, ObjectGuid owner_guid, Field* fi
     SetUInt32Value(ITEM_FIELD_MAXDURABILITY, proto->MaxDurability);
 
     // do not overwrite durability for wrapped items
-    if (durability > proto->MaxDurability && !IsWrapped())
+    if (durability > proto->MaxDurability && !HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_WRAPPED))
     {
         SetUInt32Value(ITEM_FIELD_DURABILITY, proto->MaxDurability);
         need_save = true;
@@ -709,7 +709,7 @@ bool Item::CanBeTraded(bool mail, bool trade) const
     if (m_lootGenerated)
         return false;
 
-    if ((!mail || !IsBoundAccountWide()) && (IsSoulBound() && (!IsBOPTradeable() || !trade)))
+    if ((!mail || !IsBoundAccountWide()) && (IsSoulBound() && (!HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_BOP_TRADEABLE) || !trade)))
         return false;
 
     if (IsBag() && (Player::IsBagPos(GetPos()) || !ToBag()->IsEmpty()))
@@ -1033,7 +1033,7 @@ bool Item::IsBindedNotWith(Player const* player) const
     if (GetOwnerGUID() == player->GetGUID())
         return false;
 
-    if (IsBOPTradeable())
+    if (HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_BOP_TRADEABLE))
         if (allowedGUIDs.find(player->GetGUID()) != allowedGUIDs.end())
             return false;
 
@@ -1094,7 +1094,7 @@ void Item::DeleteRefundDataFromDB(SQLTransaction* trans)
 
 void Item::SetNotRefundable(Player* owner, bool changestate /*=true*/, SQLTransaction* trans /*=nullptr*/)
 {
-    if (!IsRefundable())
+    if (!HasFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_REFUNDABLE))
         return;
 
     RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_REFUNDABLE);

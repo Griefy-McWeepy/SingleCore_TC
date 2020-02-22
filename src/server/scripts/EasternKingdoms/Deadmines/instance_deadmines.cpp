@@ -175,7 +175,7 @@ class instance_deadmines : public InstanceMapScript
             {
                 if (GameObject* pIronCladDoor = instance->GetGameObject(IronCladDoorGUID))
                 {
-                    pIronCladDoor->SetGoState(GO_STATE_DESTROYED);
+                    pIronCladDoor->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
                     pIronCladDoor->PlayDirectSound(SOUND_DESTROYDOOR);
                 }
             }

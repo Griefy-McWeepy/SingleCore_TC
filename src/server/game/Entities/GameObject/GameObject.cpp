@@ -418,10 +418,6 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
     if (goinfo->IsLargeGameObject())
         SetVisibilityDistanceOverride(VisibilityDistanceType::Large);
 
-    // Check if GameObject is Infinite
-    if (goinfo->IsInfiniteGameObject())
-        SetVisibilityDistanceOverride(VisibilityDistanceType::Infinite);
-
     return true;
 }
 
@@ -1011,8 +1007,7 @@ void GameObject::SaveToDB(uint32 mapid, uint8 spawnMask, uint32 phaseMask)
         data.spawnId = m_spawnId;
     ASSERT(data.spawnId == m_spawnId);
     data.id = GetEntry();
-    data.mapId = GetMapId();
-    data.spawnPoint.Relocate(this);
+    data.spawnPoint.WorldRelocate(this);
     data.phaseMask = phaseMask;
     data.rotation = m_localRotation;
     data.spawntimesecs = m_spawnedByDefault ? m_respawnDelayTime : -(int32)m_respawnDelayTime;
@@ -1129,7 +1124,7 @@ bool GameObject::LoadFromDB(ObjectGuid::LowType spawnId, Map* map, bool addToMap
 
     SQLTransaction trans = CharacterDatabase.BeginTransaction();
 
-    sMapMgr->DoForAllMapsWithMapId(data->mapId,
+    sMapMgr->DoForAllMapsWithMapId(data->spawnPoint.GetMapId(),
         [spawnId, trans](Map* map) -> void
         {
             // despawn all active objects, and remove their respawns
@@ -1477,7 +1472,7 @@ void GameObject::SwitchDoorOrButton(bool activate, bool alternative /* = false *
         RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
 
     if (GetGoState() == GO_STATE_READY)                      //if closed -> open
-        SetGoState(alternative ? GO_STATE_DESTROYED : GO_STATE_ACTIVE);
+        SetGoState(alternative ? GO_STATE_ACTIVE_ALTERNATIVE : GO_STATE_ACTIVE);
     else                                                    //if open -> close
         SetGoState(GO_STATE_READY);
 }

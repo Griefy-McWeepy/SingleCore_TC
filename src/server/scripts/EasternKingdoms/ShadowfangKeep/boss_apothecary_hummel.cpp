@@ -70,9 +70,7 @@ enum ApothecaryEvents
     EVENT_PERFUME_SPRAY,
     EVENT_COLOGNE_SPRAY,
     EVENT_CALL_BAXTER,
-    EVENT_CALL_FRYE,
-    EVENT_CALL_CRAZED_APOTHECARY,
-    EVENT_CRAZED_APOTHECARY
+    EVENT_CALL_FRYE
 };
 
 enum ApothecaryMisc
@@ -222,9 +220,8 @@ class boss_apothecary_hummel : public CreatureScript
                             events.ScheduleEvent(EVENT_CALL_FRYE, 14s);
                             events.ScheduleEvent(EVENT_PERFUME_SPRAY, Milliseconds(3640));
                             events.ScheduleEvent(EVENT_CHAIN_REACTION, 15s);
-                            events.ScheduleEvent(EVENT_CALL_CRAZED_APOTHECARY, 15s);
-                            events.ScheduleEvent(EVENT_CRAZED_APOTHECARY, 15s);
 
+                            Talk(SAY_SUMMON_ADDS);
                             std::vector<Creature*> trashs;
                             me->GetCreatureListWithEntryInGrid(trashs, NPC_CROWN_APOTHECARY);
                             for (Creature* crea : trashs)
@@ -247,13 +244,6 @@ class boss_apothecary_hummel : public CreatureScript
                             summons.DoAction(ACTION_START_FIGHT, pred);
                             break;
                         }
-                        case EVENT_CALL_CRAZED_APOTHECARY:
-                            Talk(SAY_SUMMON_ADDS);
-                            break;
-                        case EVENT_CRAZED_APOTHECARY:
-                            instance->SetData(DATA_SPAWN_VALENTINE_ADDS, 0);
-                            events.Repeat(Seconds(4), Seconds(6));
-                            break;
                         case EVENT_PERFUME_SPRAY:
                             DoCastVictim(SPELL_PERFUME_SPRAY);
                             events.Repeat(Milliseconds(3640));

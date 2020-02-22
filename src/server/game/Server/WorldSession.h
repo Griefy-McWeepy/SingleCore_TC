@@ -83,13 +83,6 @@ namespace WorldPackets
         class Hello;
         class TrainerBuySpell;
     }
-    namespace Misc
-    {
-        class CompleteCinematic;
-        class CompleteMovie;
-        class NextCinematicCamera;
-        class OpeningCinematic;
-    }
     namespace Query
     {
         class QueryCreature;
@@ -491,7 +484,6 @@ class TC_GAME_API WorldSession
         void HandleAlterAppearance(WorldPacket& recvData);
         void HandleCharCustomize(WorldPacket& recvData);
         void HandleCharCustomizeCallback(std::shared_ptr<CharacterCustomizeInfo> customizeInfo, PreparedQueryResult result);
-        void HandleOpeningCinematic(WorldPackets::Misc::OpeningCinematic& packet);
 
         void SendCharCreate(ResponseCodes result);
         void SendCharDelete(ResponseCodes result);
@@ -812,9 +804,8 @@ class TC_GAME_API WorldSession
         void HandleGetChannelMemberCount(WorldPacket& recvPacket);
         void HandleSetChannelWatch(WorldPacket& recvPacket);
 
-        void HandleCompleteCinematic(WorldPackets::Misc::CompleteCinematic& packet);
-        void HandleNextCinematicCamera(WorldPackets::Misc::NextCinematicCamera& packet);
-        void HandleCompleteMovie(WorldPackets::Misc::CompleteMovie& packet);
+        void HandleCompleteCinematic(WorldPacket& recvPacket);
+        void HandleNextCinematicCamera(WorldPacket& recvPacket);
 
         void HandlePageTextQueryOpcode(WorldPacket& recvPacket);
 

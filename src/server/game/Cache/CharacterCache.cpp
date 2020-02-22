@@ -19,7 +19,6 @@
 #include "ArenaTeam.h"
 #include "DatabaseEnv.h"
 #include "Log.h"
-#include "MiscPackets.h"
 #include "Player.h"
 #include "Timer.h"
 #include "World.h"
@@ -116,7 +115,7 @@ void CharacterCache::DeleteCharacterCacheEntry(ObjectGuid const& guid, std::stri
     _characterCacheByNameStore.erase(name);
 }
 
-void CharacterCache::UpdateCharacterData(ObjectGuid const& guid, std::string const& name, Optional<uint8> gender /*= {}*/, Optional<uint8> race /*= {}*/)
+void CharacterCache::UpdateCharacterData(ObjectGuid const& guid, std::string const& name, uint8* gender /*= nullptr*/, uint8* race /*= nullptr*/)
 {
     auto itr = _characterCacheStore.find(guid);
     if (itr == _characterCacheStore.end())
@@ -131,8 +130,9 @@ void CharacterCache::UpdateCharacterData(ObjectGuid const& guid, std::string con
     if (race)
         itr->second.Race = *race;
 
-    WorldPackets::Misc::InvalidatePlayer packet(guid);
-    sWorld->SendGlobalMessage(packet.Write());
+    WorldPacket data(SMSG_INVALIDATE_PLAYER, 8);
+    data << guid;
+    sWorld->SendGlobalMessage(&data);
 
     // Correct name -> pointer storage
     _characterCacheByNameStore.erase(oldName);
